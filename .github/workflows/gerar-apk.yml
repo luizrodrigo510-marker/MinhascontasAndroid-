@@ -4,19 +4,18 @@ name: Gerar APK Android
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'MinhasContasAndroid-Projeto-Celular.zip'
-      - '.github/workflows/gerar-apk.yml'
+    branches: [ main ]
+
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Baixar projeto
         uses: actions/checkout@v4
-
-      - name: Extrair projeto
-        run: unzip -q MinhasContasAndroid-Projeto-Celular.zip -d .
 
       - name: Configurar Java
         uses: actions/setup-java@v4
@@ -24,18 +23,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar componentes Android
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Compilar APK
-        working-directory: MinhasContasAndroid
-        run: gradle assembleDebug
+      - name: Extrair projeto
+        run: unzip -q MinhasContasAndroid-Projeto-Celular.zip -d extraido
 
-      - name: Disponibilizar APK
+      - name: Compilar APK
+        run: gradle assembleDebug
+        working-directory: extraido/MinhasContasAndroid
+
+      - name: Salvar APK
         uses: actions/upload-artifact@v4
         with:
           name: MinhasContas-APK
-          path: MinhasContasAndroid/app/build/outputs/apk/debug/app-debug.apk
+          path: extraido/MinhasContasAndroid/app/build/outputs/apk/debug/app-debug.apk
           
